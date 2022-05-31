@@ -59,12 +59,22 @@ namespace ShopFront
         private void UpdateProduct(object s, RoutedEventArgs e)
         {
             var product = products.FirstOrDefault(p => p.Name == OldName);
+
             if (product != null)
             {
                 product.Name = SelectedProduct.Name;
                 product.ImageUrl = SelectedProduct.ImageUrl;
             }
 
+            GetProducts();
+        }
+
+        private void DeleteProduct(object s, RoutedEventArgs e)
+        {
+            var productToDeleted = (s as FrameworkElement).DataContext as Product;
+
+            products.Remove(productToDeleted);
+           
             GetProducts();
         }
     }
