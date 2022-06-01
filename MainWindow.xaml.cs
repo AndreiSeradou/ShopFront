@@ -1,6 +1,6 @@
-﻿using ShopFront.Models;
+﻿using ShopFront.Interfaces.Services;
+using ShopFront.Models;
 using System.Collections.Generic;
-using System.Linq;
 using System.Windows;
 
 namespace ShopFront
@@ -10,49 +10,57 @@ namespace ShopFront
     /// </summary>
     public partial class MainWindow : Window
     {
-        private List<Product> products = new List<Product>();
-        private Product NewProduct = new Product();
-        private string OldName;
-        private Product SelectedProduct = new Product();
+        private readonly IHTTPService _hTTPService;
 
-        public MainWindow()
+        private List<Product> _products;
+        private Product _newProduct = new Product();
+        private Product _selectedProduct = new Product();
+        private string _oldName;
+        private string _oldImageUrl;
+
+        public MainWindow(IHTTPService hTTPService)
         {
+            _hTTPService = hTTPService;
+            _products = _hTTPService.GetProducts();
             InitializeComponent();
             GetProducts();
-
-            AddNewProductGrid.DataContext = NewProduct;
+            AddNewProductGrid.DataContext = _newProduct;
         }
 
         private void GetProducts()
         {
-           ShopProduct.ItemsSource = null;
-           ShopProduct.ItemsSource = products;
+            _products = _hTTPService.GetProducts();
+            ShopProduct.ItemsSource = null;
+           ShopProduct.ItemsSource = _products;
         }
 
         private void AddProduct(object s, RoutedEventArgs e)
         {
-            products.Add(new Product { ImageUrl = NewProduct.ImageUrl, Name = NewProduct.Name });
-            NewProduct = new Product();
-            AddNewProductGrid.DataContext = NewProduct;
+            _products.Add(new Product { ImageUrl = _newProduct.ImageUrl, Name = _newProduct.Name });
+            _hTTPService.CreateProduct(_newProduct.Name, _newProduct.ImageUrl);
+            _newProduct = new Product();
+            AddNewProductGrid.DataContext = _newProduct;
 
             GetProducts();
         }
 
         private void UpdateProductForEdit(object s, RoutedEventArgs e)
         {
-            SelectedProduct = (s as FrameworkElement).DataContext as Product;
-            OldName = SelectedProduct.Name;
-            UpdateProductGrid.DataContext= SelectedProduct;
+            _selectedProduct = (s as FrameworkElement).DataContext as Product;
+            _oldName = _selectedProduct.Name;
+            _oldImageUrl = _selectedProduct.ImageUrl;
+            UpdateProductGrid.DataContext= _selectedProduct;
+            GetProducts();
         }
 
         private void UpdateProduct(object s, RoutedEventArgs e)
         {
-            var product = products.FirstOrDefault(p => p.Name == OldName);
-
-            if (product != null)
+            var result = _hTTPService.UpdateProduct(_selectedProduct.Name, _selectedProduct.ImageUrl, _oldName, _oldImageUrl);
+            
+            if (result)
             {
-                product.Name = SelectedProduct.Name;
-                product.ImageUrl = SelectedProduct.ImageUrl;
+                _oldName = _selectedProduct.Name;
+                _oldImageUrl = _selectedProduct.ImageUrl;
             }
 
             GetProducts();
@@ -62,8 +70,11 @@ namespace ShopFront
         {
             var productToDeleted = (s as FrameworkElement).DataContext as Product;
 
-            products.Remove(productToDeleted);
-           
+            if (_products.Remove(productToDeleted))
+            {
+                _hTTPService.DeleteProduct(productToDeleted.Name, productToDeleted.ImageUrl);
+            }
+
             GetProducts();
         }
     }
