@@ -10,14 +10,15 @@ namespace ShopFront.Services
 {
     public class HTTPService : IHTTPService
     {
-        private readonly string _baseUrl = " http://localhost:5044/Shop";
+        private readonly string _baseUrl = "http://localhost:5044/Shop";
 
         public bool CreateProduct(string name, string imageUrl)
         {
             var request = WebRequest.Create(_baseUrl + $"?url={imageUrl}&name={name}");
 
             request.Method = "POST";
- 
+            request.ContentLength = 0;
+
             var response = request.GetResponse();
             var respStream = response.GetResponseStream();
             var reader = new StreamReader(respStream);
@@ -81,7 +82,9 @@ namespace ShopFront.Services
         public bool UpdateProduct(string newName, string newImageUrl, string oldName, string oldImageUrl)
         {
             var request = WebRequest.Create(_baseUrl + $"?newUrl={newImageUrl}&newName={newName}&oldUrl={oldImageUrl}&oldName={oldName}");
+
             request.Method = "PUT";
+            request.ContentLength = 0;
 
             var response = request.GetResponse();
             var respStream = response.GetResponseStream();
